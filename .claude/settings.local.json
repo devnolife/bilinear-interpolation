@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gcc:*)",
+      "Bash(if [ -f test.exe ])",
+      "Bash(then echo \"test.exe exists\")",
+      "Bash(./test.exe:*)",
+      "Bash(else echo \"No executable found\")",
+      "Bash(fi)",
+      "Bash(make:*)",
+      "Bash(ls:*)",
+      "Bash(./bilinear_serial.exe:*)",
+      "Bash(./bilinear_omp.exe:*)",
+      "Bash(./test_serial.exe:*)",
+      "Bash(cat:*)",
+      "Bash(./bilinear_openmp_parallel.exe:*)",
+      "Bash(./test_omp.exe:*)"
+    ]
+  }
+}

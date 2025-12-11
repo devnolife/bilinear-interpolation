@@ -1,0 +1,78 @@
+# Makefile untuk Bilinear Interpolation (Pure C with OpenMP)
+# Author: Andi Agung Dwi Arya
+
+CC = gcc
+CFLAGS = -std=c99 -O3 -Wall
+LIBS = -lm
+SOURCE = bilinear_openmp.c
+
+# Target executables
+SERIAL = bilinear_serial
+OPENMP = bilinear_omp
+
+.PHONY: all serial openmp clean run-serial run-openmp help
+
+# Default target
+all: serial openmp
+
+# Serial implementation only
+serial:
+	@echo "=== Compiling Serial Version (Pure C) ==="
+	$(CC) $(CFLAGS) -o $(SERIAL) $(SOURCE) $(LIBS)
+	@echo "✓ Done: $(SERIAL)"
+	@echo ""
+
+# OpenMP implementation
+openmp:
+	@echo "=== Compiling OpenMP Version (Pure C) ==="
+	$(CC) $(CFLAGS) -fopenmp -DUSE_OPENMP -o $(OPENMP) $(SOURCE) $(LIBS)
+	@echo "✓ Done: $(OPENMP)"
+	@echo ""
+
+# Run serial version
+run-serial: serial
+	@echo "=== Running Serial Benchmark ==="
+	./$(SERIAL)
+
+# Run OpenMP version
+run-openmp: openmp
+	@echo "=== Running OpenMP Benchmark ==="
+	./$(OPENMP)
+
+# Run both
+run-all: all
+	@echo "========================================"
+	@echo "   Running Serial Benchmark"
+	@echo "========================================"
+	./$(SERIAL)
+	@echo ""
+	@echo "========================================"
+	@echo "   Running OpenMP Benchmark"
+	@echo "========================================"
+	./$(OPENMP)
+
+# Clean compiled files
+clean:
+	@echo "Cleaning up..."
+	rm -f $(SERIAL) $(OPENMP)
+	rm -f *.exe *.o
+	@echo "✓ Clean done"
+
+# Help target
+help:
+	@echo "Bilinear Interpolation Makefile (Pure C)"
+	@echo "========================================="
+	@echo ""
+	@echo "Targets:"
+	@echo "  make serial      - Compile serial version only"
+	@echo "  make openmp      - Compile with OpenMP support"
+	@echo "  make all         - Compile both versions"
+	@echo "  make run-serial  - Compile and run serial benchmark"
+	@echo "  make run-openmp  - Compile and run OpenMP benchmark"
+	@echo "  make run-all     - Run both benchmarks"
+	@echo "  make clean       - Remove compiled files"
+	@echo "  make help        - Show this help"
+	@echo ""
+	@echo "Quick Start:"
+	@echo "  make && ./bilinear_omp"
+	@echo ""
