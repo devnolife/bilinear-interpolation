@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilinear Interpolation - Visual Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #0f3460, #533483);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 { font-size: 2.2em; margin-bottom: 5px; }
+        .header p { color: #a0a0a0; }
+        .author-info { 
+            background: rgba(0,217,255,0.1); 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            display: inline-block; 
+            margin-top: 10px;
+            border: 1px solid rgba(0,217,255,0.3);
+        }
+        .author-info span { color: #00d9ff; font-weight: bold; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .nav-tab:hover { background: rgba(255,255,255,0.2); }
+        .nav-tab.active { 
+            background: linear-gradient(90deg, #00d9ff, #0099cc); 
+            color: #000; 
+            font-weight: bold;
+        }
+        
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .panel h2 {
+            color: #00d9ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0,217,255,0.3);
+        }
+        
+        .panel h3 { color: #ffd700; margin: 20px 0 10px 0; }
+        
+        /* Theory Content */
+        .theory-content { line-height: 1.8; }
+        .theory-content p { margin-bottom: 15px; }
+        
+        .formula-box {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,150,0,0.1));
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.4em;
+            color: #fff;
+        }
+        
+        .highlight { color: #00ff88; font-weight: bold; }
+        .highlight-yellow { color: #ffd700; font-weight: bold; }
+        .highlight-cyan { color: #00d9ff; }
+        
+        /* ASCII Diagram */
+        .ascii-diagram {
+            background: #0d1117;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.4;
+            color: #8b949e;
+        }
+        
+        /* Canvas Area */
+        .canvas-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .canvas-box { text-align: center; }
+        .canvas-box h3 { margin-bottom: 10px; color: #ffd700; }
+        
+        canvas {
+            border: 2px solid #00d9ff;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group label { color: #a0a0a0; }
+        
+        input[type="range"] { width: 150px; accent-color: #00d9ff; }
+        input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            border: 1px solid #00d9ff;
+            border-radius: 5px;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00d9ff, #0099cc);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,217,255,0.4);
+        }
+        
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .info-box {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .info-box .label { color: #8b949e; font-size: 0.9em; }
+        .info-box .value {
+            color: #00ff88;
+            font-size: 1.8em;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        /* Step Container */
+        .step-container {
+            background: rgba(0,217,255,0.1);
+            border: 1px solid #00d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .step-title { color: #00d9ff; font-size: 1.2em; margin-bottom: 15px; }
+        
+        .step-content {
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        
+        /* Code Display */
+        .code-container {
+            background: #0d1117;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .code-header {
+            background: #161b22;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .code-header span { color: #8b949e; }
+        
+        .code-tabs { display: flex; gap: 5px; }
+        
+        .code-tab {
+            padding: 5px 15px;
+            background: transparent;
+            color: #8b949e;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .code-tab.active {
+            background: #0d1117;
+            color: #fff;
+            border-color: #30363d;
+        }
+        
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .keyword { color: #ff7b72; }
+        .type { color: #79c0ff; }
+        .function { color: #d2a8ff; }
+        .number { color: #a5d6ff; }
+        .comment { color: #8b949e; font-style: italic; }
+        .string { color: #a5d6ff; }
+        
+        /* List Styles */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            color: #00ff88;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        /* Step Indicators */
+        .step-indicators {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #333;
+            border: 2px solid #00d9ff;
+            transition: all 0.3s;
+        }
+        
+        .step-dot.active { background: #00d9ff; box-shadow: 0 0 10px #00d9ff; }
+        .step-dot.completed { background: #00ff88; border-color: #00ff88; }
+        
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .two-columns { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖼️ Bilinear Interpolation</h1>
+        <p>Image Processing Algorithm - Visual Demo</p>
+        <div class="author-info">
+            <span>Andi Agung Dwi Arya</span> | GitHub: <span>devnolife</span> | Algoritma Komputasi S2 - 2025
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('theory')">📚 Penjelasan Teori</button>
+            <button class="nav-tab" onclick="showSection('demo')">🎮 Demo Interaktif</button>
+            <button class="nav-tab" onclick="showSection('code')">💻 Source Code</button>
+            <button class="nav-tab" onclick="showSection('steps')">📝 Step-by-Step</button>
+        </div>
+        
+        <!-- Section 1: Theory -->
+        <div id="theory" class="section active">
+            <div class="panel">
+                <h2>📖 Apa itu Bilinear Interpolation?</h2>
+                <div class="theory-content">
+                    <p><strong>Bilinear Interpolation</strong> adalah metode untuk menentukan nilai pada koordinat <span class="highlight">non-integer</span> (desimal) dengan menggunakan <span class="highlight-yellow">4 pixel tetangga terdekat</span>.</p>
+                    
+                    <p>Metode ini sangat penting dalam:</p>
+                    <ul class="feature-list">
+                        <li><strong>Image Resizing</strong> - Memperbesar/memperkecil gambar dengan hasil halus</li>
+                        <li><strong>Image Rotation</strong> - Memutar gambar tanpa efek "jagged"</li>
+                        <li><strong>Image Warping</strong> - Transformasi geometri pada gambar</li>
+                        <li><strong>Texture Mapping</strong> - Pemetaan texture pada grafik 3D</li>
+                    </ul>
+                    
+                    <h3>🎯 Mengapa "Bilinear"?</h3>
+                    <p>
+                        <span class="highlight-cyan">Bi</span> = 2 dimensi (X dan Y)<br>
+                        <span class="highlight-cyan">Linear</span> = Interpolasi linear pada kedua arah
+                    </p>
+                    
+                    <h3>📐 Ilustrasi Konsep</h3>
+                    <div class="ascii-diagram">      x0              x1
+      │               │
+ y0 ──┼───────────────┼──
+      │ <span style="color:#00ff88">f00</span>           │ <span style="color:#00ff88">f10</span>
+      │       <span style="color:#ff6b6b">●</span>───────│───→ fx
+      │       │ <span style="color:#ff6b6b">P</span>     │
+      │       ↓ fy    │
+ y1 ──┼───────────────┼──
+      │ <span style="color:#00ff88">f01</span>           │ <span style="color:#00ff88">f11</span>
+
+ <span style="color:#ff6b6b">●</span> = Titik P yang ingin kita interpolasi
+ <span style="color:#00ff88">f00, f10, f01, f11</span> = 4 pixel tetangga (nilai diketahui)
+ <span style="color:#ffd700">fx</span> = jarak horizontal dari x0 (0-1)
+ <span style="color:#ffd700">fy</span> = jarak vertical dari y0 (0-1)</div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>📐 Formula Matematika</h2>
+                
+                <div class="formula-box">
+                    <h3 style="color:#ffd700; margin-bottom:15px;">Formula Bilinear Interpolation</h3>
+                    <div class="formula">
+                        f(x,y) = f₀₀·w₀₀ + f₁₀·w₁₀ + f₀₁·w₀₁ + f₁₁·w₁₁
+                    </div>
+                </div>
+                
+                <h3>🔢 Perhitungan Bobot (Weights)</h3>
+                <div class="ascii-diagram">
+<span style="color:#ffd700">Langkah 1: Hitung Fraksi</span>
+────────────────────────────────────────
+  fx = x - floor(x)   → jarak horizontal dari tepi kiri
+  fy = y - floor(y)   → jarak vertical dari tepi atas
+
+<span style="color:#ffd700">Langkah 2: Hitung Bobot</span>
+────────────────────────────────────────
+  w00 = (1 - fx) × (1 - fy)   → bobot untuk <span style="color:#00ff88">kiri-atas</span>
+  w10 = fx × (1 - fy)         → bobot untuk <span style="color:#00ff88">kanan-atas</span>
+  w01 = (1 - fx) × fy         → bobot untuk <span style="color:#00ff88">kiri-bawah</span>
+  w11 = fx × fy               → bobot untuk <span style="color:#00ff88">kanan-bawah</span>
+
+<span style="color:#ff6b6b">PENTING:</span> w00 + w10 + w01 + w11 = <span style="color:#00ff88">1.0</span> (selalu!)
+                </div>
+                
+                <h3>💡 Intuisi Bobot</h3>
+                <p>Bobot berbanding <strong>terbalik</strong> dengan jarak. Semakin <span class="highlight">dekat</span> pixel dengan titik P, semakin <span class="highlight">besar</span> bobotnya!</p>
+                
+                <div class="ascii-diagram">
+   (x0,y0)──────────────────(x1,y0)
+      │                        │
+      │    <span style="color:#ff6b6b">w11</span>    │    <span style="color:#00d9ff">w01</span>    │
+      │   ─────────P─────────  │
+      │    <span style="color:#ffd700">w10</span>    │    <span style="color:#00ff88">w00</span>    │
+      │                        │
+   (x0,y1)──────────────────(x1,y1)
+
+Bobot = Luas area <span style="color:#ff6b6b">DIAGONAL</span> dari P
+- w00 = luas dari P ke (x1,y1) → <span style="color:#00ff88">hijau</span>
+- w10 = luas dari P ke (x0,y1) → <span style="color:#ffd700">kuning</span>
+- w01 = luas dari P ke (x1,y0) → <span style="color:#00d9ff">biru</span>
+- w11 = luas dari P ke (x0,y0) → <span style="color:#ff6b6b">merah</span>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>📊 Contoh Perhitungan</h2>
+                <div class="ascii-diagram">
+<span style="color:#ffd700">Diberikan:</span>
+────────────────────────────────────────
+Koordinat target: P(1.5, 1.5)
+
+Gambar 4×4:
+┌──────┬──────┬──────┬──────┐
+│  10  │  30  │  50  │  70  │  y=0
+├──────┼──────┼──────┼──────┤
+│  40  │ <span style="color:#00ff88">[60]</span> │ <span style="color:#00ff88">[80]</span> │ 100  │  y=1   ← 4 tetangga
+├──────┼──────┼──────┼──────┤
+│  70  │ <span style="color:#00ff88">[90]</span> │<span style="color:#00ff88">[110]</span>│ 130  │  y=2   ← untuk P(1.5,1.5)
+├──────┼──────┼──────┼──────┤
+│ 100  │ 120  │ 140  │ 160  │  y=3
+└──────┴──────┴──────┴──────┘
+  x=0    x=1    x=2    x=3
+
+<span style="color:#ffd700">Langkah 1: Tentukan 4 tetangga</span>
+────────────────────────────────────────
+  x0 = floor(1.5) = 1      x1 = 2
+  y0 = floor(1.5) = 1      y1 = 2
+  
+  f00 = image[1][1] = <span style="color:#00ff88">60</span>   (kiri-atas)
+  f10 = image[2][1] = <span style="color:#00ff88">80</span>   (kanan-atas)
+  f01 = image[1][2] = <span style="color:#00ff88">90</span>   (kiri-bawah)
+  f11 = image[2][2] = <span style="color:#00ff88">110</span>  (kanan-bawah)
+
+<span style="color:#ffd700">Langkah 2: Hitung fraksi</span>
+────────────────────────────────────────
+  fx = 1.5 - 1 = <span style="color:#00d9ff">0.5</span>
+  fy = 1.5 - 1 = <span style="color:#00d9ff">0.5</span>
+
+<span style="color:#ffd700">Langkah 3: Hitung bobot</span>
+────────────────────────────────────────
+  w00 = (1-0.5) × (1-0.5) = 0.5 × 0.5 = <span style="color:#ff6b6b">0.25</span>
+  w10 = 0.5 × (1-0.5)     = 0.5 × 0.5 = <span style="color:#ff6b6b">0.25</span>
+  w01 = (1-0.5) × 0.5     = 0.5 × 0.5 = <span style="color:#ff6b6b">0.25</span>
+  w11 = 0.5 × 0.5         = 0.5 × 0.5 = <span style="color:#ff6b6b">0.25</span>
+  
+  Total: 0.25 + 0.25 + 0.25 + 0.25 = <span style="color:#00ff88">1.0</span> ✓
+
+<span style="color:#ffd700">Langkah 4: Hitung hasil</span>
+────────────────────────────────────────
+  f(1.5, 1.5) = 60×0.25 + 80×0.25 + 90×0.25 + 110×0.25
+              = 15 + 20 + 22.5 + 27.5
+              = <span style="color:#00ff88; font-size:1.2em">85</span>
+
+<span style="color:#00ff88">HASIL: f(1.5, 1.5) = 85</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 2: Interactive Demo -->
+        <div id="demo" class="section">
+            <div class="panel">
+                <h2>🎮 Demo Interaktif</h2>
+                <p>Geser slider atau klik pada canvas untuk melihat interpolasi secara real-time!</p>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label>X:</label>
+                        <input type="range" id="xCoord" min="0" max="2.99" step="0.01" value="1.5">
+                        <input type="number" id="xValue" value="1.5" step="0.1" min="0" max="2.99">
+                    </div>
+                    <div class="control-group">
+                        <label>Y:</label>
+                        <input type="range" id="yCoord" min="0" max="2.99" step="0.01" value="1.5">
+                        <input type="number" id="yValue" value="1.5" step="0.1" min="0" max="2.99">
+                    </div>
+                    <button class="btn-primary" onclick="startAnimation()">▶️ Animasi Step-by-Step</button>
+                </div>
+                
+                <div class="canvas-container">
+                    <div class="canvas-box">
+                        <h3>Source Image (4×4)</h3>
+                        <canvas id="sourceCanvas" width="280" height="280"></canvas>
+                    </div>
+                    <div class="canvas-box">
+                        <h3>Zoom View (4 Tetangga)</h3>
+                        <canvas id="zoomCanvas" width="280" height="280"></canvas>
+                    </div>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-box">
+                        <div class="label">Koordinat Target</div>
+                        <div class="value" id="coordDisplay">(1.50, 1.50)</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="label">Hasil Interpolasi</div>
+                        <div class="value" id="resultDisplay">85.00</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="label">fx (Fraksi X)</div>
+                        <div class="value" id="fxDisplay">0.50</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="label">fy (Fraksi Y)</div>
+                        <div class="value" id="fyDisplay">0.50</div>
+                    </div>
+                </div>
+                
+                <div class="step-indicators">
+                    <div class="step-dot" id="dot0"></div>
+                    <div class="step-dot" id="dot1"></div>
+                    <div class="step-dot" id="dot2"></div>
+                    <div class="step-dot" id="dot3"></div>
+                    <div class="step-dot" id="dot4"></div>
+                </div>
+                
+                <div class="step-container">
+                    <div class="step-title" id="stepTitle">Klik "Animasi Step-by-Step" untuk melihat proses</div>
+                    <div class="step-content" id="stepContent">Atau geser slider X dan Y untuk eksplorasi manual.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 3: Source Code -->
+        <div id="code" class="section">
+            <div class="panel">
+                <h2>💻 Source Code C++</h2>
+                <p>Implementasi lengkap dalam satu file C++ tanpa header terpisah.</p>
+                
+                <div class="code-container">
+                    <div class="code-header">
+                        <div class="code-tabs">
+                            <button class="code-tab active" onclick="showCode('struct')">Struct Pixel</button>
+                            <button class="code-tab" onclick="showCode('interpolate')">Interpolate()</button>
+                            <button class="code-tab" onclick="showCode('resize')">Resize()</button>
+                            <button class="code-tab" onclick="showCode('full')">Full Code</button>
+                        </div>
+                        <span>bilinear_interpolation.cpp</span>
+                    </div>
+                    <pre id="codeDisplay"></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 4: Step by Step -->
+        <div id="steps" class="section">
+            <div class="panel">
+                <h2>📝 Perhitungan Step-by-Step Real-time</h2>
+                <p>Lihat detail perhitungan berdasarkan koordinat yang dipilih di tab Demo.</p>
+                
+                <div class="step-container" style="background: rgba(255,215,0,0.1); border-color: #ffd700;">
+                    <div class="step-title" style="color: #ffd700;">📊 Perhitungan Lengkap</div>
+                    <div class="step-content" id="fullCalcDisplay">
+                        Pilih koordinat di tab Demo untuk melihat perhitungan lengkap.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Image Data
+        const sourceImage = [
+            [10,  30,  50,  70],
+            [40,  60,  80, 100],
+            [70,  90, 110, 130],
+            [100, 120, 140, 160]
+        ];
+        
+        // Code Snippets
+        const codeSnippets = {
+            struct: `<span class="comment">// Struktur data untuk menyimpan satu pixel</span>
+<span class="keyword">struct</span> <span class="type">Pixel</span> {
+    <span class="type">float</span> r;  <span class="comment">// Red   (0-255)</span>
+    <span class="type">float</span> g;  <span class="comment">// Green (0-255)</span>
+    <span class="type">float</span> b;  <span class="comment">// Blue  (0-255)</span>
+    
+    <span class="comment">// Constructor default: pixel hitam</span>
+    <span class="function">Pixel</span>() : r(<span class="number">0</span>), g(<span class="number">0</span>), b(<span class="number">0</span>) {}
+    
+    <span class="comment">// Constructor dengan nilai RGB</span>
+    <span class="function">Pixel</span>(<span class="type">float</span> red, <span class="type">float</span> green, <span class="type">float</span> blue) 
+        : r(red), g(green), b(blue) {}
+    
+    <span class="comment">// Constructor untuk grayscale</span>
+    <span class="function">Pixel</span>(<span class="type">float</span> gray) : r(gray), g(gray), b(gray) {}
+};`,
+
+            interpolate: `<span class="comment">// Fungsi utama bilinear interpolation</span>
+<span class="type">Pixel</span> <span class="function">bilinearInterpolate</span>(<span class="keyword">const</span> <span class="type">Image</span>& image, <span class="type">float</span> x, <span class="type">float</span> y) {
+    
+    <span class="comment">// LANGKAH 1: Batasi koordinat</span>
+    x = <span class="function">clamp</span>(x, <span class="number">0.0f</span>, maxX);
+    y = <span class="function">clamp</span>(y, <span class="number">0.0f</span>, maxY);
+    
+    <span class="comment">// LANGKAH 2: Tentukan 4 pixel tetangga</span>
+    <span class="type">int</span> x0 = (<span class="type">int</span>)<span class="function">floor</span>(x);  <span class="comment">// Kiri</span>
+    <span class="type">int</span> y0 = (<span class="type">int</span>)<span class="function">floor</span>(y);  <span class="comment">// Atas</span>
+    <span class="type">int</span> x1 = x0 + <span class="number">1</span>;         <span class="comment">// Kanan</span>
+    <span class="type">int</span> y1 = y0 + <span class="number">1</span>;         <span class="comment">// Bawah</span>
+    
+    <span class="comment">// LANGKAH 3: Hitung fraksi</span>
+    <span class="type">float</span> fx = x - <span class="function">floor</span>(x);  <span class="comment">// Fraksi horizontal</span>
+    <span class="type">float</span> fy = y - <span class="function">floor</span>(y);  <span class="comment">// Fraksi vertical</span>
+    
+    <span class="comment">// LANGKAH 4: Ambil nilai 4 tetangga</span>
+    <span class="type">Pixel</span> f00 = image.<span class="function">getPixel</span>(x0, y0);  <span class="comment">// Kiri-Atas</span>
+    <span class="type">Pixel</span> f10 = image.<span class="function">getPixel</span>(x1, y0);  <span class="comment">// Kanan-Atas</span>
+    <span class="type">Pixel</span> f01 = image.<span class="function">getPixel</span>(x0, y1);  <span class="comment">// Kiri-Bawah</span>
+    <span class="type">Pixel</span> f11 = image.<span class="function">getPixel</span>(x1, y1);  <span class="comment">// Kanan-Bawah</span>
+    
+    <span class="comment">// LANGKAH 5: Hitung bobot</span>
+    <span class="type">float</span> w00 = (<span class="number">1.0f</span> - fx) * (<span class="number">1.0f</span> - fy);
+    <span class="type">float</span> w10 = fx * (<span class="number">1.0f</span> - fy);
+    <span class="type">float</span> w01 = (<span class="number">1.0f</span> - fx) * fy;
+    <span class="type">float</span> w11 = fx * fy;
+    
+    <span class="comment">// LANGKAH 6: Hitung hasil (weighted sum)</span>
+    <span class="type">Pixel</span> result;
+    result.r = f00.r*w00 + f10.r*w10 + f01.r*w01 + f11.r*w11;
+    result.g = f00.g*w00 + f10.g*w10 + f01.g*w01 + f11.g*w11;
+    result.b = f00.b*w00 + f10.b*w10 + f01.b*w01 + f11.b*w11;
+    
+    <span class="keyword">return</span> result;
+}`,
+
+            resize: `<span class="comment">// Resize gambar menggunakan Bilinear Interpolation</span>
+<span class="type">Image</span> <span class="function">resizeImage</span>(<span class="keyword">const</span> <span class="type">Image</span>& source, <span class="type">int</span> newWidth, <span class="type">int</span> newHeight) {
+    
+    <span class="comment">// Buat gambar baru</span>
+    <span class="type">Image</span> destination(newWidth, newHeight);
+    
+    <span class="comment">// Hitung scale factor</span>
+    <span class="type">float</span> scaleX = (<span class="type">float</span>)source.<span class="function">getWidth</span>() / newWidth;
+    <span class="type">float</span> scaleY = (<span class="type">float</span>)source.<span class="function">getHeight</span>() / newHeight;
+    
+    <span class="comment">// Loop setiap pixel di gambar tujuan</span>
+    <span class="keyword">for</span> (<span class="type">int</span> y = <span class="number">0</span>; y < newHeight; y++) {
+        <span class="keyword">for</span> (<span class="type">int</span> x = <span class="number">0</span>; x < newWidth; x++) {
+            
+            <span class="comment">// Mapping: koordinat baru -> koordinat sumber</span>
+            <span class="type">float</span> sourceX = x * scaleX;
+            <span class="type">float</span> sourceY = y * scaleY;
+            
+            <span class="comment">// Interpolasi</span>
+            <span class="type">Pixel</span> pixel = <span class="function">bilinearInterpolate</span>(source, sourceX, sourceY);
+            
+            <span class="comment">// Set pixel</span>
+            destination.<span class="function">setPixel</span>(x, y, pixel);
+        }
+    }
+    
+    <span class="keyword">return</span> destination;
+}`,
+
+            full: `<span class="comment">/**
+ * BILINEAR INTERPOLATION - Full Implementation
+ * Author: Andi Agung Dwi Arya (devnolife)
+ * Course: Algoritma Komputasi S2 - 2025
+ * 
+ * Compile: g++ -o bilinear bilinear_interpolation.cpp -std=c++17
+ */</span>
+
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;cmath&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;iomanip&gt;</span>
+
+<span class="keyword">using namespace</span> std;
+
+<span class="comment">// ═══════════════════════════════════════════════</span>
+<span class="comment">// STRUKTUR DATA</span>
+<span class="comment">// ═══════════════════════════════════════════════</span>
+
+<span class="keyword">struct</span> <span class="type">Pixel</span> {
+    <span class="type">float</span> r, g, b;
+    <span class="function">Pixel</span>() : r(<span class="number">0</span>), g(<span class="number">0</span>), b(<span class="number">0</span>) {}
+    <span class="function">Pixel</span>(<span class="type">float</span> gray) : r(gray), g(gray), b(gray) {}
+};
+
+<span class="keyword">class</span> <span class="type">Image</span> {
+<span class="keyword">private</span>:
+    vector&lt;<span class="type">Pixel</span>&gt; data;
+    <span class="type">int</span> width, height;
+<span class="keyword">public</span>:
+    <span class="function">Image</span>(<span class="type">int</span> w, <span class="type">int</span> h) : width(w), height(h) {
+        data.<span class="function">resize</span>(w * h);
+    }
+    <span class="type">int</span> <span class="function">getWidth</span>() <span class="keyword">const</span> { <span class="keyword">return</span> width; }
+    <span class="type">int</span> <span class="function">getHeight</span>() <span class="keyword">const</span> { <span class="keyword">return</span> height; }
+    <span class="type">Pixel</span>& <span class="function">getPixel</span>(<span class="type">int</span> x, <span class="type">int</span> y) { 
+        <span class="keyword">return</span> data[y * width + x]; 
+    }
+    <span class="type">void</span> <span class="function">setPixel</span>(<span class="type">int</span> x, <span class="type">int</span> y, <span class="keyword">const</span> <span class="type">Pixel</span>& p) {
+        data[y * width + x] = p;
+    }
+};
+
+<span class="comment">// ═══════════════════════════════════════════════</span>
+<span class="comment">// BILINEAR INTERPOLATION</span>
+<span class="comment">// ═══════════════════════════════════════════════</span>
+
+<span class="type">Pixel</span> <span class="function">bilinearInterpolate</span>(<span class="keyword">const</span> <span class="type">Image</span>& img, <span class="type">float</span> x, <span class="type">float</span> y) {
+    <span class="type">int</span> x0 = (<span class="type">int</span>)<span class="function">floor</span>(x), y0 = (<span class="type">int</span>)<span class="function">floor</span>(y);
+    <span class="type">int</span> x1 = x0 + <span class="number">1</span>, y1 = y0 + <span class="number">1</span>;
+    
+    <span class="type">float</span> fx = x - x0, fy = y - y0;
+    
+    <span class="type">float</span> w00 = (<span class="number">1</span>-fx)*(<span class="number">1</span>-fy), w10 = fx*(<span class="number">1</span>-fy);
+    <span class="type">float</span> w01 = (<span class="number">1</span>-fx)*fy, w11 = fx*fy;
+    
+    <span class="type">Pixel</span> result;
+    result.r = img.<span class="function">getPixel</span>(x0,y0).r*w00 + img.<span class="function">getPixel</span>(x1,y0).r*w10
+             + img.<span class="function">getPixel</span>(x0,y1).r*w01 + img.<span class="function">getPixel</span>(x1,y1).r*w11;
+    <span class="keyword">return</span> result;
+}
+
+<span class="type">int</span> <span class="function">main</span>() {
+    cout << <span class="string">"Bilinear Interpolation Demo\\n"</span>;
+    <span class="keyword">return</span> <span class="number">0</span>;
+}`
+        };
+        
+        // Canvas setup
+        const sourceCanvas = document.getElementById('sourceCanvas');
+        const zoomCanvas = document.getElementById('zoomCanvas');
+        const srcCtx = sourceCanvas.getContext('2d');
+        const zoomCtx = zoomCanvas.getContext('2d');
+        
+        let currentX = 1.5, currentY = 1.5;
+        let animationStep = -1;
+        
+        // Color functions
+        function valueToColor(val) {
+            const n = val / 160;
+            return `rgb(${50+n*180}, ${100+n*100}, ${150+n*80})`;
+        }
+        
+        // Draw source image
+        function drawSource() {
+            const cellSize = 70;
+            srcCtx.clearRect(0, 0, 280, 280);
+            
+            const x0 = Math.floor(currentX), y0 = Math.floor(currentY);
+            const x1 = Math.min(x0+1, 3), y1 = Math.min(y0+1, 3);
+            
+            for (let j = 0; j < 4; j++) {
+                for (let i = 0; i < 4; i++) {
+                    const val = sourceImage[j][i];
+                    const isNeighbor = (i>=x0 && i<=x1 && j>=y0 && j<=y1);
+                    
+                    srcCtx.fillStyle = valueToColor(val);
+                    srcCtx.fillRect(i*cellSize, j*cellSize, cellSize, cellSize);
+                    
+                    if (isNeighbor) {
+                        srcCtx.strokeStyle = '#00ff88';
+                        srcCtx.lineWidth = 4;
+                        srcCtx.strokeRect(i*cellSize+2, j*cellSize+2, cellSize-4, cellSize-4);
+                    }
+                    
+                    srcCtx.strokeStyle = '#333';
+                    srcCtx.lineWidth = 1;
+                    srcCtx.strokeRect(i*cellSize, j*cellSize, cellSize, cellSize);
+                    
+                    srcCtx.fillStyle = val > 80 ? '#000' : '#fff';
+                    srcCtx.font = 'bold 16px Arial';
+                    srcCtx.textAlign = 'center';
+                    srcCtx.fillText(val, i*cellSize+cellSize/2, j*cellSize+cellSize/2+6);
+                }
+            }
+            
+            // Draw target point
+            const px = currentX * cellSize, py = currentY * cellSize;
+            srcCtx.beginPath();
+            srcCtx.arc(px, py, 10, 0, Math.PI*2);
+            srcCtx.fillStyle = '#ff0066';
+            srcCtx.fill();
+            srcCtx.strokeStyle = '#fff';
+            srcCtx.lineWidth = 3;
+            srcCtx.stroke();
+        }
+        
+        // Draw zoom view
+        function drawZoom() {
+            zoomCtx.clearRect(0, 0, 280, 280);
+            
+            const x0 = Math.floor(currentX), y0 = Math.floor(currentY);
+            const x1 = Math.min(x0+1, 3), y1 = Math.min(y0+1, 3);
+            const fx = currentX - x0, fy = currentY - y0;
+            
+            const cellSize = 120, offset = 20;
+            
+            const neighbors = [
+                {x:0, y:0, val: sourceImage[y0][x0], label:'f00'},
+                {x:1, y:0, val: sourceImage[y0][x1], label:'f10'},
+                {x:0, y:1, val: sourceImage[y1][x0], label:'f01'},
+                {x:1, y:1, val: sourceImage[y1][x1], label:'f11'}
+            ];
+            
+            neighbors.forEach(n => {
+                const px = offset + n.x * cellSize, py = offset + n.y * cellSize;
+                
+                zoomCtx.fillStyle = valueToColor(n.val);
+                zoomCtx.fillRect(px, py, cellSize, cellSize);
+                
+                zoomCtx.strokeStyle = '#00d9ff';
+                zoomCtx.lineWidth = 2;
+                zoomCtx.strokeRect(px, py, cellSize, cellSize);
+                
+                zoomCtx.fillStyle = '#fff';
+                zoomCtx.font = 'bold 18px Arial';
+                zoomCtx.textAlign = 'center';
+                zoomCtx.fillText(n.val, px+cellSize/2, py+cellSize/2+6);
+                
+                zoomCtx.fillStyle = '#ffd700';
+                zoomCtx.font = '14px Arial';
+                zoomCtx.fillText(n.label, px+cellSize/2, py+25);
+            });
+            
+            // Target point
+            const targetX = offset + fx * cellSize;
+            const targetY = offset + fy * cellSize;
+            
+            zoomCtx.beginPath();
+            zoomCtx.arc(targetX, targetY, 12, 0, Math.PI*2);
+            zoomCtx.fillStyle = '#ff0066';
+            zoomCtx.fill();
+            zoomCtx.strokeStyle = '#fff';
+            zoomCtx.lineWidth = 3;
+            zoomCtx.stroke();
+        }
+        
+        // Calculate interpolation
+        function calculate() {
+            const x0 = Math.floor(currentX), y0 = Math.floor(currentY);
+            const x1 = Math.min(x0+1, 3), y1 = Math.min(y0+1, 3);
+            const fx = currentX - x0, fy = currentY - y0;
+            
+            const f00 = sourceImage[y0][x0], f10 = sourceImage[y0][x1];
+            const f01 = sourceImage[y1][x0], f11 = sourceImage[y1][x1];
+            
+            const w00 = (1-fx)*(1-fy), w10 = fx*(1-fy);
+            const w01 = (1-fx)*fy, w11 = fx*fy;
+            
+            const result = f00*w00 + f10*w10 + f01*w01 + f11*w11;
+            
+            return {x0,y0,x1,y1,fx,fy,f00,f10,f01,f11,w00,w10,w01,w11,result};
+        }
+        
+        // Update display
+        function updateDisplay() {
+            const c = calculate();
+            
+            document.getElementById('coordDisplay').textContent = `(${currentX.toFixed(2)}, ${currentY.toFixed(2)})`;
+            document.getElementById('resultDisplay').textContent = c.result.toFixed(2);
+            document.getElementById('fxDisplay').textContent = c.fx.toFixed(2);
+            document.getElementById('fyDisplay').textContent = c.fy.toFixed(2);
+            
+            // Full calculation
+            document.getElementById('fullCalcDisplay').innerHTML = `
+<span style="color:#ffd700">Koordinat Target:</span> (${currentX.toFixed(2)}, ${currentY.toFixed(2)})
+
+<span style="color:#ffd700">LANGKAH 1: Tetangga</span>
+x0 = floor(${currentX.toFixed(2)}) = ${c.x0}    x1 = ${c.x1}
+y0 = floor(${currentY.toFixed(2)}) = ${c.y0}    y1 = ${c.y1}
+
+<span style="color:#ffd700">LANGKAH 2: Nilai Tetangga</span>
+f00 = image[${c.x0}][${c.y0}] = <span style="color:#00ff88">${c.f00}</span>  (kiri-atas)
+f10 = image[${c.x1}][${c.y0}] = <span style="color:#00ff88">${c.f10}</span>  (kanan-atas)
+f01 = image[${c.x0}][${c.y1}] = <span style="color:#00ff88">${c.f01}</span>  (kiri-bawah)
+f11 = image[${c.x1}][${c.y1}] = <span style="color:#00ff88">${c.f11}</span> (kanan-bawah)
+
+<span style="color:#ffd700">LANGKAH 3: Fraksi</span>
+fx = ${currentX.toFixed(2)} - ${c.x0} = <span style="color:#00d9ff">${c.fx.toFixed(4)}</span>
+fy = ${currentY.toFixed(2)} - ${c.y0} = <span style="color:#00d9ff">${c.fy.toFixed(4)}</span>
+
+<span style="color:#ffd700">LANGKAH 4: Bobot</span>
+w00 = (1-${c.fx.toFixed(2)}) × (1-${c.fy.toFixed(2)}) = <span style="color:#ff6b6b">${c.w00.toFixed(4)}</span>
+w10 = ${c.fx.toFixed(2)} × (1-${c.fy.toFixed(2)})     = <span style="color:#ff6b6b">${c.w10.toFixed(4)}</span>
+w01 = (1-${c.fx.toFixed(2)}) × ${c.fy.toFixed(2)}     = <span style="color:#ff6b6b">${c.w01.toFixed(4)}</span>
+w11 = ${c.fx.toFixed(2)} × ${c.fy.toFixed(2)}         = <span style="color:#ff6b6b">${c.w11.toFixed(4)}</span>
+Total = ${(c.w00+c.w10+c.w01+c.w11).toFixed(4)} ✓
+
+<span style="color:#ffd700">LANGKAH 5: Hasil</span>
+f(x,y) = ${c.f00}×${c.w00.toFixed(3)} + ${c.f10}×${c.w10.toFixed(3)} + ${c.f01}×${c.w01.toFixed(3)} + ${c.f11}×${c.w11.toFixed(3)}
+       = ${(c.f00*c.w00).toFixed(2)} + ${(c.f10*c.w10).toFixed(2)} + ${(c.f01*c.w01).toFixed(2)} + ${(c.f11*c.w11).toFixed(2)}
+       = <span style="color:#00ff88; font-size:1.3em">${c.result.toFixed(4)}</span>`;
+        }
+        
+        // Update all
+        function updateAll() {
+            drawSource();
+            drawZoom();
+            updateDisplay();
+        }
+        
+        // Animation steps
+        const steps = [
+            { title: "Step 1: Koordinat Target", getContent: () => `Target: P(${currentX.toFixed(2)}, ${currentY.toFixed(2)})\n\nKoordinat ini bukan integer, perlu interpolasi!` },
+            { title: "Step 2: Cari 4 Tetangga", getContent: () => { const c = calculate(); return `x0 = floor(${currentX.toFixed(2)}) = ${c.x0}\ny0 = floor(${currentY.toFixed(2)}) = ${c.y0}\nx1 = ${c.x1}, y1 = ${c.y1}\n\nf00=${c.f00}, f10=${c.f10}, f01=${c.f01}, f11=${c.f11}`; }},
+            { title: "Step 3: Hitung Fraksi", getContent: () => { const c = calculate(); return `fx = ${currentX.toFixed(2)} - ${c.x0} = ${c.fx.toFixed(4)}\nfy = ${currentY.toFixed(2)} - ${c.y0} = ${c.fy.toFixed(4)}`; }},
+            { title: "Step 4: Hitung Bobot", getContent: () => { const c = calculate(); return `w00 = ${c.w00.toFixed(4)}\nw10 = ${c.w10.toFixed(4)}\nw01 = ${c.w01.toFixed(4)}\nw11 = ${c.w11.toFixed(4)}\n\nTotal = ${(c.w00+c.w10+c.w01+c.w11).toFixed(4)} ✓`; }},
+            { title: "Step 5: Hasil Interpolasi", getContent: () => { const c = calculate(); return `f(x,y) = ${c.f00}×${c.w00.toFixed(3)} + ${c.f10}×${c.w10.toFixed(3)} + ${c.f01}×${c.w01.toFixed(3)} + ${c.f11}×${c.w11.toFixed(3)}\n\n= ${c.result.toFixed(4)}`; }}
+        ];
+        
+        function showStep(n) {
+            for (let i = 0; i < 5; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                dot.classList.remove('active', 'completed');
+                if (i < n) dot.classList.add('completed');
+                if (i === n) dot.classList.add('active');
+            }
+            if (n >= 0 && n < steps.length) {
+                document.getElementById('stepTitle').textContent = steps[n].title;
+                document.getElementById('stepContent').textContent = steps[n].getContent();
+            }
+        }
+        
+        function startAnimation() {
+            animationStep = 0;
+            showStep(0);
+            const interval = setInterval(() => {
+                animationStep++;
+                if (animationStep < 5) showStep(animationStep);
+                else clearInterval(interval);
+            }, 2000);
+        }
+        
+        // Section navigation
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Code tabs
+        function showCode(type) {
+            document.getElementById('codeDisplay').innerHTML = codeSnippets[type];
+            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        // Event listeners
+        document.getElementById('xCoord').addEventListener('input', e => {
+            currentX = parseFloat(e.target.value);
+            document.getElementById('xValue').value = currentX.toFixed(2);
+            updateAll();
+        });
+        
+        document.getElementById('yCoord').addEventListener('input', e => {
+            currentY = parseFloat(e.target.value);
+            document.getElementById('yValue').value = currentY.toFixed(2);
+            updateAll();
+        });
+        
+        document.getElementById('xValue').addEventListener('change', e => {
+            currentX = Math.max(0, Math.min(2.99, parseFloat(e.target.value)));
+            document.getElementById('xCoord').value = currentX;
+            updateAll();
+        });
+        
+        document.getElementById('yValue').addEventListener('change', e => {
+            currentY = Math.max(0, Math.min(2.99, parseFloat(e.target.value)));
+            document.getElementById('yCoord').value = currentY;
+            updateAll();
+        });
+        
+        sourceCanvas.addEventListener('click', e => {
+            const rect = sourceCanvas.getBoundingClientRect();
+            currentX = Math.max(0, Math.min(2.99, (e.clientX - rect.left) / 70));
+            currentY = Math.max(0, Math.min(2.99, (e.clientY - rect.top) / 70));
+            document.getElementById('xCoord').value = currentX;
+            document.getElementById('yCoord').value = currentY;
+            document.getElementById('xValue').value = currentX.toFixed(2);
+            document.getElementById('yValue').value = currentY.toFixed(2);
+            updateAll();
+        });
+        
+        // Init
+        showCode('struct');
+        updateAll();
+    </script>
+</body>
+</html>
